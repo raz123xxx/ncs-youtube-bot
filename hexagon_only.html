@@ -1,0 +1,153 @@
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+.wrap{display:flex;justify-content:center;padding:20px 0;}
+.poster{
+  width:360px;height:420px;background:#e0e0e0;
+  position:relative;overflow:hidden;
+}
+canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+</style>
+<div class="wrap">
+<div class="poster" id="poster">
+  <canvas id="c"></canvas>
+</div>
+</div>
+<script>
+const canvas=document.getElementById('c');
+const poster=document.getElementById('poster');
+const ctx=canvas.getContext('2d');
+canvas.width=poster.offsetWidth;
+canvas.height=poster.offsetHeight;
+const W=canvas.width,H=canvas.height;
+const CX=W/2,CY=H/2;
+const BASE_S=22;
+const WALL=224;
+
+function h2p(q,r){
+  return{x:CX+BASE_S*(Math.sqrt(3)*q+Math.sqrt(3)/2*r),y:CY+BASE_S*(3/2*r)};
+}
+function hexPts(cx,cy,s){
+  let p=[];
+  for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);p.push([cx+s*Math.cos(a),cy+s*Math.sin(a)]);}
+  return p;
+}
+
+const rawGrid=[];
+for(let q=-5;q<=5;q++){
+  for(let r=-5;r<=5;r++){
+    const s2=-q-r,dist=Math.max(Math.abs(q),Math.abs(r),Math.abs(s2));
+    if(dist>4)continue;
+    rawGrid.push({q,r,dist});
+  }
+}
+
+const PUSH_DUR=700,HOLD_OUT=1800,PULL_DUR=650,FLAT1=1200,
+      PUSH_IN=600,HOLD_DEEP=1400,RISE_DUR=650,FLAT2=1200;
+const CYCLE=PUSH_DUR+HOLD_OUT+PULL_DUR+FLAT1+PUSH_IN+HOLD_DEEP+RISE_DUR+FLAT2;
+
+function easeOutBack(x){const c1=1.70158,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2);}
+function easeInOut(x){return x<0.5?4*x*x*x:(1-Math.pow(-2*x+2,3))/2;}
+function easeInQ(x){return x*x;}
+function easeOutQ(x){return 1-(1-x)*(1-x);}
+
+function getElev(t,hx){
+  const local=((t+hx.startOffset)%CYCLE+CYCLE)%CYCLE;
+  let acc=0;
+  if(local<(acc+=PUSH_DUR))return easeOutBack(local/PUSH_DUR);
+  if(local<(acc+=HOLD_OUT)){const bt=(local-(acc-HOLD_OUT))/HOLD_OUT;return 1+Math.sin(bt*Math.PI*2)*0.05;}
+  if(local<(acc+=PULL_DUR)){const pt=(local-(acc-PULL_DUR))/PULL_DUR;return 1-easeInOut(pt);}
+  if(local<(acc+=FLAT1))return 0;
+  if(local<(acc+=PUSH_IN)){const pt=(local-(acc-PUSH_IN))/PUSH_IN;return -easeInQ(pt);}
+  if(local<(acc+=HOLD_DEEP))return -1;
+  if(local<(acc+=RISE_DUR)){const pt=(local-(acc-RISE_DUR))/RISE_DUR;return-(1-easeOutQ(pt));}
+  return 0;
+}
+
+const hexes=rawGrid.map(h=>{
+  const{x,y}=h2p(h.q,h.r);
+  const bright=250-h.dist*11+(Math.random()*8-4);
+  return{q:h.q,r:h.r,dist:h.dist,x,y,
+    bright:Math.min(253,Math.max(195,bright)),
+    startOffset:Math.random()*CYCLE,elev:0};
+});
+
+function drawInward(hx,depth){
+  const cx=hx.x,cy=hx.y,s=BASE_S-1.2;
+  const pts=hexPts(cx,cy,s);
+  const insetS=s*(1-depth*0.07);
+  const dx=(CX-cx)*0.03*depth,dy=(CY-cy)*0.03*depth+2.5*depth;
+  const ptsIn=hexPts(cx+dx,cy+dy,insetS);
+
+  ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<6;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();ctx.fillStyle=`rgb(${WALL},${WALL},${WALL})`;ctx.fill();
+
+  const faceLight=[[255,255,255,0.18],[245,245,245,0.22],[235,235,235,0.28],[235,235,235,0.28],[248,248,248,0.20],[255,255,255,0.12]];
+  for(let i=0;i<6;i++){
+    const next=(i+1)%6,[r,g,b,a]=faceLight[i];
+    ctx.beginPath();ctx.moveTo(pts[i][0],pts[i][1]);ctx.lineTo(pts[next][0],pts[next][1]);
+    ctx.lineTo(ptsIn[next][0],ptsIn[next][1]);ctx.lineTo(ptsIn[i][0],ptsIn[i][1]);
+    ctx.closePath();
+    const br=Math.round(WALL*(1-a)+r*a),bg=Math.round(WALL*(1-a)+g*a),bb=Math.round(WALL*(1-a)+b*a);
+    ctx.fillStyle=`rgba(${br},${bg},${bb},${depth})`;ctx.fill();
+    ctx.beginPath();ctx.moveTo(ptsIn[i][0],ptsIn[i][1]);ctx.lineTo(ptsIn[next][0],ptsIn[next][1]);
+    ctx.strokeStyle=`rgba(190,190,190,${0.3*depth})`;ctx.lineWidth=0.6;ctx.stroke();
+  }
+  const fv=Math.round(WALL-depth*18);
+  ctx.beginPath();ctx.moveTo(ptsIn[0][0],ptsIn[0][1]);
+  for(let i=1;i<6;i++)ctx.lineTo(ptsIn[i][0],ptsIn[i][1]);
+  ctx.closePath();ctx.fillStyle=`rgb(${fv},${fv},${fv})`;ctx.fill();
+  ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<6;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();ctx.strokeStyle=`rgba(170,170,170,${0.4*depth})`;ctx.lineWidth=1.2;ctx.stroke();
+}
+
+function drawOutward(hx,elev){
+  const cx=hx.x,cy=hx.y,s=BASE_S-1.2;
+  const sx=4.5*elev,sy=6*elev;
+  const pts=hexPts(cx,cy,s),ptsSide=hexPts(cx+sx*0.5,cy+sy*0.5,s),ptsShad=hexPts(cx+sx,cy+sy,s);
+
+  ctx.beginPath();ctx.moveTo(ptsShad[0][0],ptsShad[0][1]);
+  for(let i=1;i<6;i++)ctx.lineTo(ptsShad[i][0],ptsShad[i][1]);
+  ctx.closePath();ctx.fillStyle=`rgba(110,110,110,${0.22*elev})`;ctx.fill();
+
+  ctx.beginPath();ctx.moveTo(ptsSide[0][0],ptsSide[0][1]);
+  for(let i=1;i<6;i++)ctx.lineTo(ptsSide[i][0],ptsSide[i][1]);
+  ctx.closePath();
+  const sc=Math.max(155,hx.bright-28);ctx.fillStyle=`rgb(${sc},${sc},${sc})`;ctx.fill();
+
+  const tb=Math.min(255,hx.bright+elev*8);
+  ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<6;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();ctx.fillStyle=`rgb(${tb},${tb},${tb})`;ctx.fill();
+
+  ctx.beginPath();ctx.moveTo(pts[5][0],pts[5][1]);ctx.lineTo(pts[0][0],pts[0][1]);ctx.lineTo(pts[1][0],pts[1][1]);
+  ctx.strokeStyle=`rgba(255,255,255,${0.65*elev})`;ctx.lineWidth=1.8;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pts[2][0],pts[2][1]);ctx.lineTo(pts[3][0],pts[3][1]);ctx.lineTo(pts[4][0],pts[4][1]);
+  ctx.strokeStyle=`rgba(160,160,160,${0.45*elev})`;ctx.lineWidth=1.2;ctx.stroke();
+}
+
+function drawFlat(hx){
+  const pts=hexPts(hx.x,hx.y,BASE_S-1.2);
+  ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<6;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();ctx.fillStyle=`rgb(${hx.bright},${hx.bright},${hx.bright})`;ctx.fill();
+  ctx.strokeStyle='rgba(175,175,175,0.5)';ctx.lineWidth=0.8;ctx.stroke();
+}
+
+const startTime=performance.now();
+function animate(now){
+  ctx.clearRect(0,0,W,H);
+  const t=now-startTime;
+  hexes.forEach(hx=>{hx.elev=getElev(t,hx);});
+  const inward=hexes.filter(h=>h.elev<-0.05).sort((a,b)=>a.elev-b.elev);
+  const flat=hexes.filter(h=>h.elev>=-0.05&&h.elev<0.05);
+  const outward=hexes.filter(h=>h.elev>=0.05).sort((a,b)=>a.elev-b.elev);
+  inward.forEach(hx=>drawInward(hx,Math.abs(hx.elev)));
+  flat.forEach(hx=>drawFlat(hx));
+  outward.forEach(hx=>drawOutward(hx,hx.elev));
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+</script>

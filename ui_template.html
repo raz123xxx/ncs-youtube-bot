@@ -160,23 +160,33 @@
     // Visualizer Bars logic
     const vis = document.getElementById('visContainer');
     const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-color');
+    const AMPLITUDE_DATA = {{AMPLITUDE_DATA}};
     
     let bars = [];
     for(let i=0; i<7; i++) {
       let b = document.createElement('div');
-      b.className = 'w-1.5 rounded-full transition-all duration-150';
+      b.className = 'w-1.5 rounded-full transition-all duration-100 ease-out';
       b.style.backgroundColor = themeColor;
       b.style.height = '40%';
       vis.appendChild(b);
       bars.push(b);
     }
 
-    setInterval(() => {
-      bars.forEach(b => {
-        let h = Math.floor(Math.random() * 60) + 20;
+    function updateVisualizer(elapsed) {
+      if (!AMPLITUDE_DATA || AMPLITUDE_DATA.length === 0) return;
+      
+      const idx = Math.floor(elapsed * 10); // 10 samples per second
+      if (idx >= AMPLITUDE_DATA.length) return;
+      
+      const amp = AMPLITUDE_DATA[idx];
+      
+      bars.forEach((b, i) => {
+        // Add a slight stagger/offset for each bar to make it look spectral
+        const stagger = 1 + (Math.sin(i * 0.5) * 0.2);
+        let h = Math.min(100, Math.max(20, amp * stagger));
         b.style.height = h + '%';
       });
-    }, 150);
+    }
 
     // Progress Logic
     const tDur = {{DURATION}}; 
@@ -214,6 +224,9 @@
       
       bubbleContainer.style.transform = `translate(${x}px, ${y}px)`;
       bubblePercent.innerText = `${percent}%`;
+
+      // Update Visualizer bars
+      updateVisualizer(elapsed);
 
       if(elapsed < tDur) requestAnimationFrame(updateUI);
     }

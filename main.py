@@ -39,6 +39,12 @@ def run_ncs_automation(video_type="long", no_upload=False):
     if upload_success:
         print("\n🎉 AUTOMATION PIPELINE COMPLETED SUCCESSFULLY! 🎉")
         
+        # Save last genre for rotation
+        try:
+            with open("last_genre.txt", "w", encoding="utf-8") as f:
+                f.write(genre)
+        except: pass
+        
         # Cleanup
         print("🧹 Cleaning up workspace...")
         try:
