@@ -42,10 +42,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install System Dependencies (FFmpeg & OpenCV reqs)
+      - name: Install System Dependencies (FFmpeg, OpenCV, Aria2)
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg libgl1 libsm6 libxext6
+          sudo apt-get install -y ffmpeg libgl1 libsm6 libxext6 aria2
 
       - name: Install Python Dependencies
         run: |
@@ -55,13 +55,20 @@ jobs:
           pip install playwright==1.42.0
           python -m playwright install chromium ffmpeg
 
-      - name: Load YouTube API Credentials from Secrets
+      - name: Load YouTube API & Session Credentials from Secrets
         env:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET_JSON }}
           TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
+          YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
         run: |
           echo "$CLIENT_SECRET" > client_secret.json
           echo "$TOKEN_JSON" > token.json
+          if [ -n "$YOUTUBE_COOKIES" ]; then
+            echo "$YOUTUBE_COOKIES" | base64 --decode > cookies.txt
+            echo "✅ YouTube cookies loaded."
+          else
+            echo "⚠️ No YouTube cookies provided. Download might be blocked on CI/CD."
+          fi
 
       - name: Determine Trigger Type & Run Pipeline
         run: |
