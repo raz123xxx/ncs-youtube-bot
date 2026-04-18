@@ -1,15 +1,9 @@
-name: NCS YouTube Bot (5 Shorts + 1 Long)
+name: NCS YouTube Bot (6 Shorts - Every 4 Hours)
 
 on:
   schedule:
-    # Schedule runs (UTC time) to stagger the GitHub CPU loads
-    # YouTube API Limit safe: 6 uploads per day total
-    - cron: '0 4 * * *'  # 04:00 UTC (Short 1)
-    - cron: '0 8 * * *'  # 08:00 UTC (Short 2)
-    - cron: '0 12 * * *' # 12:00 UTC (Short 3)
-    - cron: '0 16 * * *' # 16:00 UTC (Short 4)
-    - cron: '0 20 * * *' # 20:00 UTC (Short 5)
-    - cron: '30 22 * * *' # 22:30 UTC (Long Video)
+    # Schedule runs every 4 hours (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
+    - cron: '0 */4 * * *'
   
   # Allow manual trigger from the GitHub Actions tab
   workflow_dispatch:
@@ -25,7 +19,7 @@ on:
       upload_to_youtube:
         description: 'Upload generated video to YouTube'
         required: true
-        default: false
+        default: true
         type: boolean
 
 jobs:
@@ -66,7 +60,7 @@ jobs:
             printf "%s\n" "$NCS_TRACK_URLS" > ncs_tracks.txt
             echo "✅ Loaded NCS track URLs from NCS_TRACK_URLS secret."
           else
-            echo "⚠️ NCS_TRACK_URLS secret not set. Using repository ncs_tracks.txt."
+            echo "⚠️ NCS_TRACK_URLS secret not set."
           fi
 
       - name: Determine Trigger Type & Run Pipeline
@@ -78,10 +72,7 @@ jobs:
             else
               python main.py --type ${{ github.event.inputs.video_type }} --no-upload
             fi
-          # If triggered by specific cron time for the Long Video
-          elif [ "${{ github.event.schedule }}" = "30 22 * * *" ]; then
-            python main.py --type long
-          # Default to Short for all other scheduled runs
+          # For all scheduled runs, we now do 6 Shorts (every 4 hours)
           else
             python main.py --type short
           fi
