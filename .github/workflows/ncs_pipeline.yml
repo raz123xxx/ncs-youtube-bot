@@ -52,6 +52,8 @@ jobs:
           pip install --upgrade pip
           pip install --upgrade yt-dlp
           pip install -r requirements.txt
+          pip install playwright==1.42.0
+          python -m playwright install chromium ffmpeg
 
       - name: Load YouTube API Credentials from Secrets
         env:

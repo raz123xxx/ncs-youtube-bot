@@ -29,7 +29,7 @@ def run_ncs_automation(video_type="long"):
     print("\n>>> STEP 3: Compiling Music Video with Visualizer...")
     video_path = "downloads/final_video.mp4"
     
-    success = create_music_video(audio_path, image_path, video_path, video_type)
+    success = create_music_video(audio_path, image_path, video_path, video_type, song_title=title)
     if not success:
         print("Pipeline Failed at Step 3.")
         return
