@@ -11,8 +11,8 @@ def download_random_ncs_song(output_dir="downloads"):
     os.makedirs(output_dir, exist_ok=True)
     print("Fetching list of latest NCS videos...")
     
-    # Target NCS YouTube channel
-    ncs_url = "https://www.youtube.com/@NoCopyrightSounds/videos"
+    # Target NCS SoundCloud channel
+    ncs_url = "https://soundcloud.com/nocopyrightsounds/tracks"
     
     # 1. Fetch JSON data of latest 50 videos to reliably get Title and ID
     cmd = [
@@ -31,8 +31,8 @@ def download_random_ncs_song(output_dir="downloads"):
             if not line: continue
             try:
                 data = json.loads(line)
-                if data.get("id") and data.get("title"):
-                    videos.append({"id": data["id"], "title": data["title"]})
+                if data.get("id") and data.get("title") and data.get("url"):
+                    videos.append({"id": data["id"], "title": data["title"], "url": data["url"]})
             except json.JSONDecodeError:
                 pass
         
@@ -62,7 +62,7 @@ def download_random_ncs_song(output_dir="downloads"):
         with open(history_file, 'a', encoding='utf-8') as f:
             f.write(chosen['id'] + "\n")
             
-        target_v_url = f"https://www.youtube.com/watch?v={chosen['id']}"
+        target_v_url = chosen['url']
         print(f"Selected: {chosen['title']} ({target_v_url})")
         
         # We enforce a generic name 'audio.wav' so downstream scripts don't have to guess
@@ -74,7 +74,6 @@ def download_random_ncs_song(output_dir="downloads"):
             
         dl_cmd = [
             "yt-dlp",
-            "--extractor-args", "youtube:player_client=android,web",
             "-f", "bestaudio/best",
             "--extract-audio",
             "--audio-format", "wav", 
