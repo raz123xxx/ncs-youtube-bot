@@ -37,6 +37,11 @@ jobs:
         with:
           python-version: '3.10'
 
+      - name: Setup Node.js (for yt-dlp JS runtime)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Install System Dependencies (FFmpeg & OpenCV reqs)
         run: |
           sudo apt-get update

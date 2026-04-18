@@ -74,6 +74,7 @@ def download_random_ncs_song(output_dir="downloads"):
             
         dl_cmd = [
             "yt-dlp",
+            "--extractor-args", "youtube:player_client=android,web",
             "-f", "bestaudio/best",
             "--extract-audio",
             "--audio-format", "wav", 
@@ -92,7 +93,9 @@ def download_random_ncs_song(output_dir="downloads"):
             return None, None
             
     except subprocess.CalledProcessError as e:
-        print(f"Command Error: yt-dlp failed. Make sure ffmpeg and yt-dlp are installed. error: {e}")
+        print(f"Command Error: yt-dlp failed with exit code {e.returncode}.")
+        if getattr(e, 'stderr', None):
+            print(f"yt-dlp STDERR: {e.stderr}")
         return None, None
     except Exception as e:
         print(f"Error downloading: {e}")
