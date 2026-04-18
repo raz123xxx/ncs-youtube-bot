@@ -59,13 +59,22 @@ jobs:
         env:
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET_JSON }}
           TOKEN_JSON: ${{ secrets.TOKEN_JSON }}
+          YTDLP_COOKIES: ${{ secrets.YTDLP_COOKIES }}
           YOUTUBE_COOKIES: ${{ secrets.YOUTUBE_COOKIES }}
         run: |
           echo "$CLIENT_SECRET" > client_secret.json
           echo "$TOKEN_JSON" > token.json
-          if [ -n "$YOUTUBE_COOKIES" ]; then
-            echo "$YOUTUBE_COOKIES" | base64 --decode > cookies.txt
-            echo "✅ YouTube cookies loaded."
+
+          if [ -n "$YTDLP_COOKIES" ]; then
+            printf "%s\n" "$YTDLP_COOKIES" > cookies.txt
+            echo "✅ Loaded cookies from YTDLP_COOKIES."
+          elif [ -n "$YOUTUBE_COOKIES" ]; then
+            if echo "$YOUTUBE_COOKIES" | base64 --decode > cookies.txt 2>/dev/null; then
+              echo "✅ Loaded cookies from YOUTUBE_COOKIES (base64)."
+            else
+              printf "%s\n" "$YOUTUBE_COOKIES" > cookies.txt
+              echo "✅ Loaded cookies from YOUTUBE_COOKIES (raw text)."
+            fi
           else
             echo "⚠️ No YouTube cookies provided. Download might be blocked on CI/CD."
           fi
