@@ -10,16 +10,25 @@
       background-color: #e6e9ef;
       margin: 0;
       padding: 0;
-      width: 540px;
-      height: 960px;
+      width: 1080px;
+      height: 1920px;
       overflow: hidden;
+    }
+    #scale-container {
+      width: 400px;
+      height: 711.11px;
+      transform: scale(2.7);
+      transform-origin: top left;
     }
   </style>
 </head>
 <body>
 
-  <!-- Main Full-Screen Container - No margins, no outer frame space -->
-  <div class="h-full w-full bg-[#e6e9ef] flex flex-col items-center justify-between py-10 px-6 font-sans text-gray-600 select-none">
+  <!-- Scale Wrapper to proportionally magnify mobile layout into HD -->
+  <div id="scale-container">
+
+    <!-- Main Full-Screen Container - No margins, no outer frame space -->
+    <div class="h-full w-full bg-[#e6e9ef] flex flex-col items-center justify-between py-10 px-6 font-sans text-gray-600 select-none">
     
     <!-- Top Header Section -->
     <div class="w-full flex justify-between items-center max-w-md">
@@ -35,9 +44,9 @@
     </div>
 
     <!-- Track Info -->
-    <div class="text-center mt-2 px-6">
-      <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight">{{SONG_NAME}}</h1>
-      <p class="text-[13px] font-bold tracking-widest text-cyan-600 opacity-60 mt-2">NOCOPYRIGHTSOUNDS</p>
+    <div class="text-center mt-4 px-8">
+      <h1 class="text-2xl font-bold text-gray-800 tracking-tight leading-tight">{{SONG_NAME}}</h1>
+      <p class="text-[11px] font-bold tracking-[0.2em] text-cyan-600 opacity-50 mt-1 uppercase">NoCopyrightSounds</p>
     </div>
 
     <!-- Central Interactive Dial -->
@@ -174,5 +183,6 @@
     }
     requestAnimationFrame(updateUI);
   </script>
+  </div>
 </body>
 </html>
