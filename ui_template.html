@@ -28,28 +28,25 @@
   <div id="scale-container">
 
     <!-- Main Full-Screen Container - No margins, no outer frame space -->
-    <div class="h-full w-full bg-[#e6e9ef] flex flex-col items-center justify-between pt-4 pb-10 px-6 font-sans text-gray-600 select-none">
+    <div class="h-full w-full bg-[#e6e9ef] flex flex-col items-center justify-between py-10 px-6 font-sans text-gray-600 select-none">
     
-    <!-- TOP GROUP: Header + Track Info stuck together at the top -->
-    <div class="w-full flex flex-col items-center">
-      <!-- Top Header Section -->
-      <div class="w-full flex justify-between items-center max-w-md">
-        <button class="w-10 h-10 rounded-full bg-[#e6e9ef] shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff] flex items-center justify-center">
-          <i data-lucide="chevron-left" class="text-gray-400" width="18" height="18"></i>
-        </button>
-        <div class="text-center">
-          <p class="text-[10px] tracking-[0.2em] uppercase opacity-40 font-bold">NCS Release</p>
-        </div>
-        <button class="w-10 h-10 rounded-full bg-[#e6e9ef] shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff] flex items-center justify-center">
-          <i data-lucide="more-vertical" class="text-gray-400" width="18" height="18"></i>
-        </button>
+    <!-- Top Header Section -->
+    <div class="w-full flex justify-between items-center max-w-md">
+      <button class="w-10 h-10 rounded-full bg-[#e6e9ef] shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff] flex items-center justify-center">
+        <i data-lucide="chevron-left" class="text-gray-400" width="18" height="18"></i>
+      </button>
+      <div class="text-center">
+        <p class="text-[10px] tracking-[0.2em] uppercase opacity-40 font-bold">NCS Release</p>
       </div>
+      <button class="w-10 h-10 rounded-full bg-[#e6e9ef] shadow-[4px_4px_8px_#bebebe,-4px_-4px_8px_#ffffff] flex items-center justify-center">
+        <i data-lucide="more-vertical" class="text-gray-400" width="18" height="18"></i>
+      </button>
+    </div>
 
-      <!-- Track Info -->
-      <div class="text-center mt-1 px-8">
-        <p class="text-[10px] font-bold tracking-[0.2em] text-cyan-600 opacity-50 mb-1 uppercase">NoCopyrightSounds</p>
-        <h1 class="text-xl font-bold text-gray-800 tracking-tight leading-tight">{{SONG_NAME}}</h1>
-      </div>
+    <!-- Track Info -->
+    <div class="text-center mt-2 px-8">
+      <p class="text-[10px] font-bold tracking-[0.2em] text-cyan-600 opacity-50 mb-1 uppercase">NoCopyrightSounds</p>
+      <h1 class="text-xl font-bold text-gray-800 tracking-tight leading-tight">{{SONG_NAME}}</h1>
     </div>
 
     <!-- Central Interactive Dial -->
