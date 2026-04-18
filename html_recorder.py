@@ -15,7 +15,7 @@ async def record_html_bg(duration_sec, output_path):
         # We enforce strict 1080x1920 output dimension for shorts
         context = await browser.new_context(
             record_video_dir=os.path.dirname(output_path),
-            record_video_size={"width": 1080, "height": 1920}
+            record_video_size={"width": 540, "height": 960}
         )
         page = await context.new_page()
         
