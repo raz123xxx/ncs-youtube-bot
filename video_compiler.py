@@ -66,6 +66,7 @@ def create_music_video(audio_path="downloads/audio.wav", image_path="downloads/b
             fps=30, 
             codec="libx264", 
             audio_codec="aac",
+            audio_bitrate="320k", # Force High Quality Audio
             threads=2,
             preset="ultrafast",
             logger=None
