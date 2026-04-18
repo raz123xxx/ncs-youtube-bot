@@ -38,7 +38,7 @@ jobs:
       - name: Install System Dependencies (FFmpeg & OpenCV reqs)
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg libgl1-mesa-glx libsm6 libxext6
+          sudo apt-get install -y ffmpeg libgl1 libsm6 libxext6
 
       - name: Install Python Dependencies
         run: pip install -r requirements.txt
