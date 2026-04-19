@@ -2,6 +2,7 @@ import subprocess
 import random
 import os
 import json
+import re
 
 HISTORY_FILE = "downloads_history.txt"
 COOKIES_FILE = "cookies.txt"
@@ -23,14 +24,52 @@ def save_to_history(track_id):
 
 
 def detect_genre(title):
-    """Detect genre from NCS title pattern: Artist - Song | Genre | NCS - ..."""
-    genre = "NCS Release"
+    """
+    Detect genre from NCS title patterns:
+    - Pipe format:    Artist - Song | Genre | NCS x Label ...
+    - Bracket format: Artist - Song [Genre]
+    """
+    SKIP_LABELS = {"ncs release", "ncs", "ncs x aurorian records", "copyright free music", ""}
     title_clean = title.replace("\uff5c", "|")
+
+    # Pipe format: pick first part that is not a skip label
     if "|" in title_clean:
         parts = [p.strip() for p in title_clean.split("|")]
-        if len(parts) >= 2:
-            genre = parts[1]
-    return genre
+        for part in parts[1:]:          # skip artist/song name (parts[0])
+            candidate = part.strip()
+            if candidate.lower() not in SKIP_LABELS and not candidate.lower().startswith("ncs x"):
+                return candidate
+
+    # Bracket format: Artist - Song [Genre] or Artist - Song [NCS Release]
+    matches = re.findall(r'\[([^\]]+)\]', title_clean)
+    for match in matches:
+        candidate = match.strip()
+        if candidate.lower() not in SKIP_LABELS:
+            return candidate
+
+    return "NCS Release"
+
+
+def find_genre_from_youtube(sc_title, yt_videos):
+    """
+    Cross-reference a SoundCloud title with YouTube videos to get the real genre.
+    SoundCloud uses '[NCS Release]', YouTube uses '| Genre |'.
+    Matches by artist name(s) found in both titles.
+    """
+    # Extract artist part: everything before ' - ' or '[' in the SoundCloud title
+    artist_part = re.split(r'\s*[-–]\s*|\s*\[', sc_title)[0].strip().lower()
+    # artist_part might be like "twisted, kellapsage" or "nuphory, chikaya"
+    # Split by comma to get individual artist names
+    artists = [a.strip() for a in re.split(r'[,&]', artist_part) if a.strip()]
+
+    for yt in yt_videos:
+        yt_lower = yt["title"].lower()
+        # Check if any artist from SoundCloud is in the YouTube title
+        if any(len(a) > 3 and a in yt_lower for a in artists):
+            genre = yt.get("genre", "NCS Release")
+            if genre and genre.lower() != "ncs release":
+                return genre
+    return None
 
 
 # ─────────────────────────────────────────
@@ -351,6 +390,13 @@ def download_random_ncs_song(output_dir="downloads"):
         fresh_sc = [t for t in sc_tracks if t["id"] not in history]
         chosen_sc = fresh_sc[0] if fresh_sc else sc_tracks[0]
         print(f"  Trying: {chosen_sc['title']}")
+
+        # SoundCloud titles use '[NCS Release]' — cross-reference YouTube for real genre
+        if chosen_sc["genre"] == "NCS Release" and yt_videos:
+            yt_genre = find_genre_from_youtube(chosen_sc["title"], yt_videos)
+            if yt_genre:
+                chosen_sc["genre"] = yt_genre
+                print(f"  Genre resolved via YouTube: {yt_genre}")
 
         if download_via_ytdlp(chosen_sc["url"], audio_file, use_cookies=False):
             save_to_history(chosen_sc["id"])
