@@ -7,16 +7,18 @@ jobs:
   test-tor:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Tor
+      - name: Install Tor + latest yt-dlp
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y tor yt-dlp
-          echo "✅ Tor installed"
+          sudo apt-get install -y tor
+          pip install -U yt-dlp
+          echo "✅ Tor + yt-dlp (latest) installed"
+          yt-dlp --version
 
       - name: Start Tor and wait for circuit
         run: |
           sudo service tor start
-          echo "Waiting 20s for circuit..."
+          echo "Waiting 20s for Tor circuit..."
           sleep 20
           if nc -z 127.0.0.1 9050; then
             echo "✅ Tor SOCKS5 ready on port 9050"
@@ -24,28 +26,28 @@ jobs:
             echo "❌ Tor port not open" && exit 1
           fi
 
-      - name: Check external IP via Tor
+      - name: Verify IP rotation
         run: |
           REAL_IP=$(curl -s https://api.ipify.org)
           TOR_IP=$(curl -s --socks5 127.0.0.1:9050 https://api.ipify.org)
           echo "Real IP : $REAL_IP"
           echo "Tor IP  : $TOR_IP"
           if [ "$REAL_IP" != "$TOR_IP" ]; then
-            echo "✅ IPs are different — Tor is rotating successfully!"
+            echo "✅ IPs are different — Tor routing confirmed!"
           else
-            echo "⚠️ IPs same — Tor may not be routing correctly"
+            echo "⚠️ Same IP — Tor may not be routing properly"
           fi
 
-      - name: Download NCS song via Tor (yt-dlp)
+      - name: Download NCS song via Tor (human-like)
         run: |
-          echo "Waiting 10s before request (human-like)..."
-          sleep $((RANDOM % 10 + 8))
-          
+          WAIT=$((RANDOM % 12 + 8))
+          echo "Waiting ${WAIT}s before request (human-like)..."
+          sleep $WAIT
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-          
           yt-dlp \
             --proxy socks5://127.0.0.1:9050 \
             --user-agent "$UA" \
+            --extractor-args "youtube:player-client=web,android" \
             --limit-rate 200K \
             --sleep-interval 3 \
             --max-sleep-interval 10 \
@@ -53,13 +55,14 @@ jobs:
             --extract-audio --audio-format wav --audio-quality 0 \
             --no-playlist \
             -o /tmp/test_song.wav \
-            "https://www.youtube.com/watch?v=NlcYFvVZoqo" 2>&1
+            "https://www.youtube.com/watch?v=NlcYFvVZoqo"
 
-      - name: Verify download
+      - name: Verify download result
         run: |
           if [ -f /tmp/test_song.wav ] && [ $(stat -c%s /tmp/test_song.wav) -gt 100000 ]; then
             SIZE=$(du -sh /tmp/test_song.wav | cut -f1)
-            echo "✅ SUCCESS! Downloaded via Tor — Size: $SIZE"
+            echo "✅ SUCCESS! NCS song downloaded via Tor — Size: $SIZE"
           else
             echo "❌ Download failed or file too small"
+            exit 1
           fi
