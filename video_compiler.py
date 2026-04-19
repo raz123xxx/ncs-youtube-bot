@@ -12,13 +12,25 @@ from moviepy.editor import AudioFileClip, VideoFileClip
 # NCS Official Genre → Brand Color Mapping
 # ────────────────────────────────────────────────────────
 NCS_GENRE_COLORS = {
-    # Drum & Bass family  → Red
+    # Drum & Bass family → Red
     "drum & bass":        "#E53935",
+    "drum n bass":        "#E53935",
+    "d&b":                "#E53935",
     "dnb":                "#E53935",
     "drumstep":           "#E53935",
-    "liquid dnb":         "#E53935",
+    "liquid dnb":         "#29B6F6",
+    "liquid drum":        "#29B6F6",
+    "neurofunk":          "#B71C1C",
+    "jungle":             "#E53935",
+    "breakbeat":          "#EF5350",
+    "breaks":             "#EF5350",
 
     # House family → Yellow / Orange
+    "rally house":        "#FDD835",
+    "slap house":         "#FDD835",
+    "melodic house":      "#FDD835",
+    "speed house":        "#FF6F00",
+    "afro house":         "#FFB300",
     "house":              "#FDD835",
     "bass house":         "#FB8C00",
     "future house":       "#FF6F00",
@@ -26,40 +38,68 @@ NCS_GENRE_COLORS = {
     "deep house":         "#FFB300",
     "tech house":         "#FF8F00",
     "tropical house":     "#FFCA28",
+    "big room":           "#FF8F00",
 
-    # Trap family → Green
+    # Trap / Hip Hop family → Green
+    "hybrid trap":        "#43A047",
+    "jersey club":        "#43A047",
     "trap":               "#43A047",
     "future trap":        "#2E7D32",
     "hip hop":            "#388E3C",
     "phonk":              "#558B2F",
+    "footwork":           "#33691E",
+    "r&b":                "#EC407A",
+    "rnb":                "#EC407A",
+    "funk":               "#FF7043",
+    "soul":               "#FF7043",
 
     # Future Bass / Melodic → Teal / Cyan
     "future bass":        "#00ACC1",
     "melodic dubstep":    "#00897B",
     "chillstep":          "#29B6F6",
     "chill":              "#4FC3F7",
+    "midtempo":           "#00BCD4",
+    "bass":               "#00ACC1",
 
     # Dubstep → Blue
     "dubstep":            "#1E88E5",
     "complextro":         "#1565C0",
 
-    # Electronic / Electro → Orange
+    # Electronic / Electro / EDM → Orange
     "electronic":         "#FB8C00",
     "electro":            "#F57C00",
+    "edm":                "#FB8C00",
+    "dance":              "#FF7043",
 
-    # Indie / Alternative → Warm Coral
+    # Trance → Purple
+    "trance":             "#AB47BC",
+    "psytrance":          "#7B1FA2",
+    "uplifting trance":   "#AB47BC",
+    "progressive trance": "#9C27B0",
+
+    # Indie / Alternative / Pop → Warm Coral / Pink
     "indie":              "#FF7043",
     "alternative":        "#FF5722",
     "pop":                "#EC407A",
+    "rock":               "#FF5722",
+    "punk":               "#FF1744",
+    "metal":              "#90A4AE",
+    "acoustic":           "#8D6E63",
+    "folk":               "#8D6E63",
 
     # Ambient / Orchestral → Indigo
     "ambient":            "#5C6BC0",
     "orchestral":         "#3949AB",
     "classical":          "#3F51B5",
+    "jazz":               "#5C6BC0",
+    "piano":              "#5C6BC0",
+    "acoustic piano":     "#5C6BC0",
 
-    # Hardstyle → Silver/White
+    # Hardstyle → Silver/Grey
     "hardstyle":          "#B0BEC5",
     "hardcore":           "#90A4AE",
+    "rawstyle":           "#78909C",
+    "frenchcore":         "#90A4AE",
 
     # Witch House / Dark / Gothic → Deep Purple/Violet
     "witch house":        "#9C27B0",
@@ -76,33 +116,80 @@ NCS_GENRE_COLORS = {
     "vaporwave":          "#CE93D8",
     "lo-fi":              "#BA68C8",
     "lofi":               "#BA68C8",
+    "chillwave":          "#BA68C8",
+    "dreamwave":          "#CE93D8",
 
     # Glitch / Experimental → Lime Green
     "glitch":             "#C6FF00",
     "experimental":       "#76FF03",
+    "noise":              "#C6FF00",
 
     # Rave / Party → Hot Pink
     "rave":               "#FF1744",
     "party":              "#FF4081",
+    "festival":           "#FF4081",
 
     # Default NCS Brand Cyan
     "ncs release":        "#00E5FF",
 }
 
-# Keyword-based fallback (when genre = "NCS Release" but title has hints)
+# Keyword-based fallback (when genre title contains hints)
 KEYWORD_COLORS = [
-    (["drum", "bass", "dnb"],                         "#E53935"),
-    (["trap", "hip hop", "phonk"],                    "#43A047"),
-    (["house", "tropical"],                           "#FDD835"),
-    (["dubstep", "drum bass"],                        "#1E88E5"),
-    (["future bass", "melodic"],                      "#00ACC1"),
-    (["chill", "ambient", "sleep"],                   "#29B6F6"),
-    (["electro", "electronic"],                       "#FB8C00"),
-    (["indie", "alternative", "pop"],                 "#FF7043"),
-    (["hardstyle", "hardcore"],                       "#B0BEC5"),
-    (["witch", "dark", "gothic", "shadow", "luster", "haunted", "cursed"], "#9C27B0"),
-    (["synth", "retro", "wave", "neon", "cyber"],     "#E91E63"),
-    (["glitch", "experiment"],                        "#C6FF00"),
+    # DnB / Drum & Bass
+    (["drum & bass", "drum n bass", "neurofunk", "liquid dnb", "liquid drum"], "#E53935"),
+    (["dnb", "d&b", "drumstep", "jungle", "breakbeat", "breaks"],             "#E53935"),
+    (["drum", "bass"],                                                          "#E53935"),
+
+    # House (check specific before generic)
+    (["rally house", "slap house", "melodic house", "afro house"],             "#FDD835"),
+    (["speed house", "future house", "big room"],                              "#FF6F00"),
+    (["bass house"],                                                            "#FB8C00"),
+    (["tech house", "deep house"],                                              "#FF8F00"),
+    (["tropical house"],                                                        "#FFCA28"),
+    (["house"],                                                                 "#FDD835"),
+
+    # Trap / Hip Hop
+    (["hybrid trap", "jersey club", "footwork"],                               "#43A047"),
+    (["trap", "hip hop", "phonk"],                                              "#43A047"),
+
+    # Trance
+    (["trance", "psy", "uplifting", "psytrance"],                              "#AB47BC"),
+
+    # Future Bass / Melodic / Midtempo
+    (["future bass", "melodic dubstep", "midtempo"],                           "#00ACC1"),
+    (["melodic"],                                                               "#00ACC1"),
+
+    # Dubstep / Complextro
+    (["dubstep", "complextro"],                                                 "#1E88E5"),
+
+    # Chill / Ambient / Lo-fi
+    (["chillstep", "chill", "lofi", "lo-fi", "ambient", "sleep", "piano"],    "#29B6F6"),
+    (["chillwave", "dreamwave"],                                                "#BA68C8"),
+
+    # Synthwave / Retrowave
+    (["synthwave", "retrowave", "outrun", "vaporwave", "synth"],               "#E91E63"),
+    (["neon", "cyber", "retro", "wave"],                                        "#E91E63"),
+
+    # Electronic / EDM / Dance
+    (["electro", "electronic", "edm", "dance"],                                "#FB8C00"),
+
+    # Hardstyle / Hardcore
+    (["hardstyle", "hardcore", "rawstyle", "frenchcore"],                      "#B0BEC5"),
+
+    # Dark / Gothic / Witch
+    (["witch", "dark", "gothic", "shadow", "haunted", "cursed", "occult"],    "#9C27B0"),
+    (["horror", "luster"],                                                      "#9C27B0"),
+
+    # Glitch / Experimental
+    (["glitch", "experiment", "noise"],                                         "#C6FF00"),
+
+    # Indie / Alt / Pop / R&B
+    (["r&b", "rnb", "soul", "funk"],                                            "#EC407A"),
+    (["indie", "alternative", "rock", "punk"],                                  "#FF7043"),
+    (["pop"],                                                                    "#EC407A"),
+
+    # Orchestral / Classical
+    (["orchestral", "classical", "jazz", "acoustic"],                           "#3949AB"),
 ]
 
 
