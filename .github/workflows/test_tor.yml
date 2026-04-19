@@ -12,57 +12,39 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y tor
           pip install -U yt-dlp
-          echo "✅ Tor + yt-dlp (latest) installed"
-          yt-dlp --version
+          echo "✅ Tor + yt-dlp $(yt-dlp --version) installed"
 
-      - name: Start Tor and wait for circuit
+      - name: Start Tor and verify
         run: |
           sudo service tor start
-          echo "Waiting 20s for Tor circuit..."
           sleep 20
-          if nc -z 127.0.0.1 9050; then
-            echo "✅ Tor SOCKS5 ready on port 9050"
-          else
-            echo "❌ Tor port not open" && exit 1
-          fi
-
-      - name: Verify IP rotation
-        run: |
+          nc -z 127.0.0.1 9050 && echo "✅ Tor SOCKS5 ready" || (echo "❌ Tor not ready" && exit 1)
           REAL_IP=$(curl -s https://api.ipify.org)
           TOR_IP=$(curl -s --socks5 127.0.0.1:9050 https://api.ipify.org)
           echo "Real IP : $REAL_IP"
           echo "Tor IP  : $TOR_IP"
-          if [ "$REAL_IP" != "$TOR_IP" ]; then
-            echo "✅ IPs are different — Tor routing confirmed!"
-          else
-            echo "⚠️ Same IP — Tor may not be routing properly"
-          fi
+          [ "$REAL_IP" != "$TOR_IP" ] && echo "✅ IP rotation working!" || echo "⚠️ Same IP"
 
-      - name: Download NCS song via Tor (human-like)
+      - name: Download NCS song via Tor (search-based, human-like)
         run: |
-          WAIT=$((RANDOM % 12 + 8))
-          echo "Waiting ${WAIT}s before request (human-like)..."
-          sleep $WAIT
+          sleep $((RANDOM % 10 + 8))
           UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
           yt-dlp \
             --proxy socks5://127.0.0.1:9050 \
             --user-agent "$UA" \
             --extractor-args "youtube:player-client=web,android" \
             --limit-rate 200K \
-            --sleep-interval 3 \
-            --max-sleep-interval 10 \
+            --sleep-interval 3 --max-sleep-interval 10 \
             -f bestaudio/best \
             --extract-audio --audio-format wav --audio-quality 0 \
             --no-playlist \
             -o /tmp/test_song.wav \
-            "https://www.youtube.com/watch?v=NlcYFvVZoqo"
+            "ytsearch1:Elektronomia Sky High NCS"
 
-      - name: Verify download result
+      - name: Verify result
         run: |
           if [ -f /tmp/test_song.wav ] && [ $(stat -c%s /tmp/test_song.wav) -gt 100000 ]; then
-            SIZE=$(du -sh /tmp/test_song.wav | cut -f1)
-            echo "✅ SUCCESS! NCS song downloaded via Tor — Size: $SIZE"
+            echo "✅✅ SUCCESS! Song downloaded via Tor — $(du -sh /tmp/test_song.wav)"
           else
-            echo "❌ Download failed or file too small"
-            exit 1
+            echo "❌ Download failed" && exit 1
           fi
