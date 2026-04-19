@@ -65,7 +65,7 @@
         <!-- 1. Sunken Track -->
         <div class="absolute w-[296px] h-[296px] rounded-full shadow-[inset_12px_12px_24px_#bebebe,inset_-12px_-12px_24px_#ffffff]"></div>
         
-        <!-- 2. SVG Cyan Progress Line -->
+        <!-- 2. SVG Progress Ring -->
         <div class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
           <svg class="w-[340px] h-[340px] -rotate-90">
             <circle
@@ -157,9 +157,11 @@
   <script>
     lucide.createIcons();
 
+    // Read theme color — trim whitespace to avoid invalid color values
+    const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim();
+
     // Visualizer Bars logic
     const vis = document.getElementById('visContainer');
-    const themeColor = getComputedStyle(document.documentElement).getPropertyValue('--theme-color');
     const AMPLITUDE_DATA = {{AMPLITUDE_DATA}};
     
     let bars = [];
