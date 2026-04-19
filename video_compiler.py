@@ -61,6 +61,30 @@ NCS_GENRE_COLORS = {
     "hardstyle":          "#B0BEC5",
     "hardcore":           "#90A4AE",
 
+    # Witch House / Dark / Gothic → Deep Purple/Violet
+    "witch house":        "#9C27B0",
+    "dark":               "#7B1FA2",
+    "gothic":             "#6A1B9A",
+    "darkwave":           "#8E24AA",
+    "horror":             "#4A148C",
+    "occult":             "#6A1B9A",
+
+    # Synthwave / Retrowave → Pink/Magenta
+    "synthwave":          "#E91E63",
+    "retrowave":          "#F06292",
+    "outrun":             "#FF4081",
+    "vaporwave":          "#CE93D8",
+    "lo-fi":              "#BA68C8",
+    "lofi":               "#BA68C8",
+
+    # Glitch / Experimental → Lime Green
+    "glitch":             "#C6FF00",
+    "experimental":       "#76FF03",
+
+    # Rave / Party → Hot Pink
+    "rave":               "#FF1744",
+    "party":              "#FF4081",
+
     # Default NCS Brand Cyan
     "ncs release":        "#00E5FF",
 }
@@ -76,6 +100,9 @@ KEYWORD_COLORS = [
     (["electro", "electronic"],                       "#FB8C00"),
     (["indie", "alternative", "pop"],                 "#FF7043"),
     (["hardstyle", "hardcore"],                       "#B0BEC5"),
+    (["witch", "dark", "gothic", "shadow", "luster", "haunted", "cursed"], "#9C27B0"),
+    (["synth", "retro", "wave", "neon", "cyber"],     "#E91E63"),
+    (["glitch", "experiment"],                        "#C6FF00"),
 ]
 
 
