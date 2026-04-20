@@ -95,6 +95,7 @@ jobs:
         with:
           name: generated-video-${{ github.run_id }}
           path: downloads/final_video.mp4
+          retention-days: 2
           if-no-files-found: warn
 
       - name: Commit history to prevent duplicates
