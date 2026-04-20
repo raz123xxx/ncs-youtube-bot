@@ -28,7 +28,9 @@ NCS_GENRE_COLORS = {
     "breakbeat":          "#EF5350",
     "breaks":             "#EF5350",
 
-    # House family → Yellow / Orange
+    # House / Garage family → Yellow / Orange
+    "speed garage":       "#FDD835",
+    "garage":             "#FDD835",
     "rally house":        "#FDD835",
     "slap house":         "#FDD835",
     "melodic house":      "#FDD835",
@@ -143,8 +145,8 @@ KEYWORD_COLORS = [
     (["dnb", "d&b", "drumstep", "jungle", "breakbeat", "breaks"],             "#E53935"),
     (["drum", "bass"],                                                          "#E53935"),
 
-    # House (check specific before generic)
-    (["rally house", "slap house", "melodic house", "afro house"],             "#FDD835"),
+    # House / Garage (check specific before generic)
+    (["speed garage", "garage", "rally house", "slap house", "melodic house", "afro house"], "#FDD835"),
     (["speed house", "future house", "big room"],                              "#FF6F00"),
     (["bass house"],                                                            "#FB8C00"),
     (["tech house", "deep house"],                                              "#FF8F00"),
