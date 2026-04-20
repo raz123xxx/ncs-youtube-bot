@@ -4,6 +4,7 @@ import os
 import re
 import json
 import time
+from urllib.parse import quote_plus
 
 HISTORY_FILE   = "downloads_history.txt"
 COOKIES_FILE   = "cookies.txt"
@@ -53,12 +54,62 @@ def save_to_history(track_id):
 
 def detect_genre(title):
     genre = "NCS Release"
-    title_clean = title.replace("\uff5c", "|")
+    title_clean = title.replace("｜", "|")
     if "|" in title_clean:
         parts = [p.strip() for p in title_clean.split("|")]
-        if len(parts) >= 2:
+        if len(parts) >= 2 and parts[1]:
             genre = parts[1]
     return genre
+
+
+def is_generic_genre(genre):
+    return not genre or genre.strip().lower() in {"ncs release", "ncs", "copyright free music", "release"}
+
+
+def _normalize_track_text(value):
+    value = (value or "").lower().replace("｜", "|")
+    value = value.split("|")[0]
+    value = re.sub(r"[[^]]*(ncs|release|copyright|free|music)[^]]*]", " ", value, flags=re.I)
+    value = re.sub(r"([^)]*(version|edit|mix|remix|visualizer|lyrics|tiktok|sped|slowed)[^)]*)", " ", value, flags=re.I)
+    value = re.sub(r"(ncs|no copyright sounds|copyright free music|official|video|visualizer)", " ", value, flags=re.I)
+    value = re.sub(r"[^a-z0-9]+", " ", value)
+    return re.sub(r"s+", " ", value).strip()
+
+
+def infer_genre_from_ncs_tracks(title, tracks):
+    target = _normalize_track_text(title)
+    if not target:
+        return "NCS Release"
+
+    best = None
+    best_score = 0
+    target_words = set(target.split())
+    for track in tracks or []:
+        candidate = _normalize_track_text(track.get("title", ""))
+        genre = track.get("genre") or "NCS Release"
+        if not candidate or is_generic_genre(genre):
+            continue
+        candidate_words = set(candidate.split())
+        score = len(target_words & candidate_words)
+        if target == candidate or target in candidate or candidate in target:
+            score += 10
+        if score > best_score:
+            best_score = score
+            best = genre
+
+    if best and best_score >= 2:
+        print(f"  Genre match: '{title}' → {best}")
+        return best
+    return "NCS Release"
+
+
+def lookup_genre_from_ncs_io(title):
+    query = _normalize_track_text(title)
+    if not query:
+        return "NCS Release"
+    query = " ".join(query.split()[:6])
+    tracks = fetch_tracks_from_ncs_io(search_query=query)
+    return infer_genre_from_ncs_tracks(title, tracks)
 
 
 def _cleanup_temp(path):
@@ -75,7 +126,7 @@ def _cleanup_temp(path):
 #   Fix: proper session headers + Referer + CDN direct URL
 #   Fix: import re was missing before
 # ─────────────────────────────────────────────────────────
-def fetch_tracks_from_ncs_io():
+def fetch_tracks_from_ncs_io(search_query=""):
     try:
         import requests
         from bs4 import BeautifulSoup
@@ -92,8 +143,12 @@ def fetch_tracks_from_ncs_io():
         session.get("https://ncs.io/", timeout=20)
         time.sleep(random.uniform(1.0, 2.5))
 
-        offset = random.choice([0, 15, 30, 45, 60, 75, 90, 105, 120])
-        url = f"https://ncs.io/music-search?q=&genre=&mood=&version=&offset={offset}"
+        if search_query:
+            offset = 0
+            url = f"https://ncs.io/music-search?q={quote_plus(search_query)}&genre=&mood=&version=&offset=0"
+        else:
+            offset = random.choice([0, 15, 30, 45, 60, 75, 90, 105, 120])
+            url = f"https://ncs.io/music-search?q=&genre=&mood=&version=&offset={offset}"
         resp = session.get(url, timeout=30)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
@@ -481,7 +536,10 @@ def download_random_ncs_song(output_dir="downloads"):
         chosen_inv = random.choice(fresh_inv) if fresh_inv else random.choice(yt_videos_inv)
         if download_via_invidious(chosen_inv["id"], inv_instance, audio_file):
             save_to_history(chosen_inv["id"])
-            return audio_file, chosen_inv["title"], chosen_inv["genre"]
+            genre_inv = chosen_inv["genre"]
+            if is_generic_genre(genre_inv):
+                genre_inv = infer_genre_from_ncs_tracks(chosen_inv["title"], ncs_tracks)
+            return audio_file, chosen_inv["title"], genre_inv
         print("  Engine 2 failed.")
     else:
         print("  Engine 2: No Invidious instances responded.")
@@ -497,7 +555,12 @@ def download_random_ncs_song(output_dir="downloads"):
         print(f"  Trying: {chosen_sc['title']}")
         if download_via_soundcloud(chosen_sc["url"], audio_file):
             save_to_history(chosen_sc["id"])
-            return audio_file, chosen_sc["title"], chosen_sc["genre"]
+            genre_sc = chosen_sc["genre"]
+            if is_generic_genre(genre_sc):
+                genre_sc = infer_genre_from_ncs_tracks(chosen_sc["title"], ncs_tracks)
+            if is_generic_genre(genre_sc):
+                genre_sc = lookup_genre_from_ncs_io(chosen_sc["title"])
+            return audio_file, chosen_sc["title"], genre_sc
         print("  Engine 3 failed.")
     else:
         print("  Engine 3: No SoundCloud tracks found.")
@@ -515,7 +578,10 @@ def download_random_ncs_song(output_dir="downloads"):
         chosen_yt = random.choice(fresh_yt) if fresh_yt else random.choice(yt_videos)
         if download_via_cobalt(chosen_yt["url"], audio_file):
             save_to_history(chosen_yt["id"])
-            return audio_file, chosen_yt["title"], chosen_yt["genre"]
+            genre_yt = chosen_yt["genre"]
+            if is_generic_genre(genre_yt):
+                genre_yt = infer_genre_from_ncs_tracks(chosen_yt["title"], ncs_tracks)
+            return audio_file, chosen_yt["title"], genre_yt
         print("  Engine 4 failed.")
     else:
         print("  Engine 4 skipped (no YouTube URLs).")
