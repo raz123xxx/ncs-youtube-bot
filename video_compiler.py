@@ -3,6 +3,7 @@ import random
 import subprocess
 import sys
 import json
+import re
 import numpy as np
 from pathlib import Path
 from moviepy.editor import AudioFileClip, VideoFileClip
@@ -14,7 +15,9 @@ from moviepy.editor import AudioFileClip, VideoFileClip
 NCS_GENRE_COLORS = {
     # Drum & Bass family → Red
     "drum & bass":        "#E53935",
+    "drum and bass":      "#E53935",
     "drum n bass":        "#E53935",
+    "drum bass":          "#E53935",
     "d&b":                "#E53935",
     "dnb":                "#E53935",
     "drumstep":           "#E53935",
@@ -193,24 +196,41 @@ KEYWORD_COLORS = [
 ]
 
 
+def _normalize_color_text(value):
+    value = (value or "").lower().replace("｜", "|")
+    value = value.replace("&", " and ")
+    value = re.sub(r"[^a-z0-9]+", " ", value)
+    value = re.sub(r"ds*ns*b", "dnb", value)
+    value = re.sub(r"s+", " ", value).strip()
+    return value
+
+
 def get_ncs_color(genre, song_title=""):
     """
     Return the NCS brand color for a genre.
-    Falls back to keyword detection on song title if genre is generic.
+    Uses normalized matching so NCS label variations like DnB, Drum and Bass,
+    Drum & Bass, and bracketed title hints still resolve to the right color.
     """
-    genre_lower = genre.lower().strip()
+    genre_norm = _normalize_color_text(genre)
+    title_norm = _normalize_color_text(song_title)
+    combined_norm = f"{genre_norm} {title_norm}".strip()
 
-    # Direct genre match — skip "ncs release" so keyword fallback gets a chance
-    for key, color in NCS_GENRE_COLORS.items():
+    # Direct genre match. Check longest labels first so specific styles like
+    # "bass house" and "liquid dnb" are not swallowed by generic "house"/"dnb".
+    for key in sorted(NCS_GENRE_COLORS, key=len, reverse=True):
         if key == "ncs release":
             continue
-        if key in genre_lower:
-            return color
+        key_norm = _normalize_color_text(key)
+        if key_norm and key_norm in genre_norm:
+            return NCS_GENRE_COLORS[key]
 
-    # Keyword fallback on title (runs for all genres including "NCS Release")
-    title_lower = song_title.lower()
+    # Keyword fallback on both genre and title.
     for keywords, color in KEYWORD_COLORS:
-        if any(kw in title_lower for kw in keywords):
+        normalized_keywords = [_normalize_color_text(kw) for kw in keywords]
+        if normalized_keywords == ["drum", "bass"]:
+            if all(kw in combined_norm for kw in normalized_keywords):
+                return color
+        elif any(kw and kw in combined_norm for kw in normalized_keywords):
             return color
 
     # Default NCS cyan (true last resort)
